@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import Head from 'next/head';
-import ChatbotComponent from '../components/Chatbot/Chatbot';
+import React, { useState } from "react";
+import Head from "next/head";
+import ChatbotComponent from "../components/Chatbot/Chatbot";
 
 const Home: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
 
   const handleUserInput = async (userInput: string) => {
     // Add the user input to the messages
-    setMessages([...messages, { type: 'user', text: userInput }]);
+    setMessages([...messages, { type: "user", text: userInput }]);
 
     // Call the API
-    const response = await fetch('/api/bedrock', {
-      method: 'POST',
+    const response = await fetch("/api/bedrock", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ input: userInput }),
     });
@@ -21,7 +21,7 @@ const Home: React.FC = () => {
     const data = await response.json();
 
     // Add the response to the messages
-    setMessages([...messages, { type: 'user', text: userInput }, { type: 'bot', text: data.response }]);
+    setMessages([...messages, { type: "user", text: userInput }, { type: "bot", text: data.response }]);
   };
 
   return (
@@ -33,7 +33,7 @@ const Home: React.FC = () => {
       </Head>
 
       <main className="chat-box">
-        <h1>AI Apartment Concierge</h1>
+        <h1>AI Apartment Concierge 🤖</h1>
         <ChatbotComponent messages={messages} onUserInput={handleUserInput} />
       </main>
     </div>
