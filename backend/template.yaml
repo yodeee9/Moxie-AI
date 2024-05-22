@@ -6,10 +6,16 @@ Description: >
   Sample SAM Template for ai-apartment-concierge
 
 Parameters:
-  AgentId:
+  ClaudAgentIdv1:
     Type: String
     Description: The agent ID for Bedrock
-  AgentAliasId:
+  ClaudeAgentAliasIdv1:
+    Type: String
+    Description: The agent alias ID for Bedrock
+  ClaudAgentIdv2:
+    Type: String
+    Description: The agent ID for Bedrock
+  ClaudeAgentAliasIdv2:
     Type: String
     Description: The agent alias ID for Bedrock
 
@@ -64,8 +70,10 @@ Resources:
       Role: !GetAtt BedrockFunctionRole.Arn
       Environment:
         Variables:
-          AGENT_ID: !Ref AgentId
-          AGENT_ALIAS_ID: !Ref AgentAliasId
+          CLAUD_AGENT_ID_V1: !Ref ClaudAgentIdv1
+          CLAUD_AGENT_ALIAS_ID_V1: !Ref ClaudeAgentAliasIdv1
+          CLAUD_AGENT_ID_V2: !Ref ClaudAgentIdv2
+          CLAUD_AGENT_ALIAS_ID_V2: !Ref ClaudeAgentAliasIdv2
       Events:
         Bedrock:
           Type: Api

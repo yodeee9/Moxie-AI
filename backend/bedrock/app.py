@@ -1,9 +1,31 @@
 import json
 import boto3
 import os
+import ldclient
+from ldclient.config import Config
+from ldclient import Context
+
+ldclient.set_config(Config("sdk-fa09e802-0d20-4337-820a-d1a9ce324d3a"))
+client = ldclient.get()
 
 def lambda_handler(event, context):
     try:
+        context = Context.builder("example-user-key-1").name("Sandy").build()
+        flag_value = client.variation("ai-model-provider", context, False)
+
+        if flag_value == "Claude-Agent-v1":
+            agent_id = os.getenv('CLAUD_AGENT_ID_V1')
+            agent_alias_id = os.getenv('CLAUD_AGENT_ALIAS_ID_V1')
+        elif flag_value == "Claude-Agent-v2":
+            agent_id = os.getenv('CLAUD_AGENT_ID_V2')
+            agent_alias_id = os.getenv('CLAUD_AGENT_ALIAS_ID_V2')
+        # elif flag_value == "Cohere-Agent-v1":
+        #     agent_id = os.getenv('COHERE_AGENT_ID_V1')
+        #     agent_alias_id = os.getenv('COHERE_AGENT_ALIAS_ID_V1')
+        # else:
+        #     agent_id = os.getenv('CLAUD_AGENT_ID_V1')
+        #     agent_alias_id = os.getenv('CLAUD_AGENT_ALIAS_ID_V1')
+
         # Extract the body from the event
         body = json.loads(event['body'])
 
@@ -14,13 +36,12 @@ def lambda_handler(event, context):
         print(f"User Input: {user_input}")
         
         # Get agentId and agentAliasId from environment variables
-        agent_id = os.getenv('AGENT_ID')
-        agent_alias_id = os.getenv('AGENT_ALIAS_ID')
+
         
         # Initialize the Bedrock client
-        client = boto3.client(service_name="bedrock-agent-runtime")
+        bedrockClient = boto3.client(service_name="bedrock-agent-runtime")
          
-        response = client.invoke_agent(
+        response = bedrockClient.invoke_agent(
             agentId=agent_id,
             agentAliasId=agent_alias_id,
             sessionId=session_id,
