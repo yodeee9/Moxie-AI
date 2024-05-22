@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   ai-apartment-concierge
@@ -28,7 +28,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -37,7 +37,7 @@ Resources:
       Policies:
         - PolicyName: BedrockAccessPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action: "*"
@@ -51,7 +51,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: "arn:aws:s3:::your-bucket-name/*"  
+                Resource: "arn:aws:s3:::your-bucket-name/*"
 
   BedrockFunction:
     Type: AWS::Serverless::Function
@@ -73,6 +73,26 @@ Resources:
             Path: /bedrock
             Method: post
 
+  ZillowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: zillow/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Role: !GetAtt BedrockFunctionRole.Arn
+      Environment:
+        Variables:
+          AGENT_ID: !Ref AgentId
+          AGENT_ALIAS_ID: !Ref AgentAliasId
+      Events:
+        Zillow:
+          Type: Api
+          Properties:
+            Path: /zillow
+            Method: get
+
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -84,7 +104,7 @@ Resources:
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName: !Ref ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
+      AutoConfigurationEnabled: "true"
 
 Outputs:
   BedrockApi:
