@@ -1,46 +1,35 @@
 import json
 import boto3
 import os
+import http.client
+import urllib.parse
 
 
 def lambda_handler(event, context):
     try:
-        # Extract the body from the event
-        body = json.loads(event['body'])
+        # print('event', event['location'])
 
-        # Extract user input and session_id from the body
-        user_input = body.get('input', 'hello')
-        session_id = body.get('session_id', '123')
-        print(f"Session ID: {session_id}")
-        print(f"User Input: {user_input}")
+        location = urllib.parse.quote(event['location'])
+        maxPrice = urllib.parse.quote(event['maxPrice'])
+        bedsMax = urllib.parse.quote(event['bedsMax'])
+        schools = urllib.parse.quote(event['schools'])
+        isCityView = urllib.parse.quote(event['isCityView'])
 
-        # Get agentId and agentAliasId from environment variables
-        agent_id = os.getenv('AGENT_ID')
-        agent_alias_id = os.getenv('AGENT_ALIAS_ID')
+        conn = http.client.HTTPSConnection("zillow-com1.p.rapidapi.com")
 
-        # Initialize the Bedrock client
-        client = boto3.client(service_name="bedrock-agent-runtime")
-
-        response = client.invoke_agent(
-            agentId=agent_id,
-            agentAliasId=agent_alias_id,
-            sessionId=session_id,
-            inputText=user_input,
-        )
-
-        print(response)
-
-        completion = ""
-
-        for event in response.get("completion", []):
-            chunk = event.get("chunk", {})
-            completion += chunk.get("bytes", b'').decode()
-
-        print(f"Completion: {completion}")
+        headers = {
+            'x-rapidapi-key': "c754b740e1mshbde5b0dfae21d33p113bbdjsn555c70485622",
+            'x-rapidapi-host': "zillow-com1.p.rapidapi.com"
+        }
+        conn.request("GET", f"/propertyExtendedSearch?location={location}&maxPrice={
+                     maxPrice}&bedsMax={bedsMax}&schools={schools}&isCityView={isCityView}", headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        decoded_data = data.decode("utf-8")
 
         return {
             'statusCode': 200,
-            'body': json.dumps({'response': completion})
+            'body': json.dumps({'response': decoded_data})
         }
 
     except Exception as e:
