@@ -1,0 +1,55 @@
+.chatBox {
+    flex: 1;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 子要素を上下に配置 */
+    height: 700px;
+    /* width: 300px; */
+    margin-right: 24px;
+  }
+  
+  .chatContainer {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px; /* フォームとの間にスペースを確保 */
+  }
+  
+  .chatForm {
+    display: flex;
+    border: 2px solid #0A74DA;
+    border-radius: 20px;
+    padding: 10px;
+    /* margin-top: 10px; フォームの上部に余白を確保 */ 
+    /* background-color: #f9f9f9; /* 背景色を設定 */
+  }
+  
+  .chatForm input {
+    flex: 1; /* 入力フィールドが利用可能な幅を全て使うようにする */
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .chatForm button {
+    padding: 5px 10px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #0A74DA;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .chatMessage {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #e1f5fe;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  

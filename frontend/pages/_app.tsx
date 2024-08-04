@@ -1,10 +1,19 @@
 // pages/_app.tsx
 
+import Header from '@/components/Header';
 import '../styles/globals.css';
-import type { AppProps } from 'next/app';
+import { AppProps } from 'next/app';
+import 'regenerator-runtime/runtime';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  return (
+  <div>
+    <header>
+      <Header />
+    </header>
+   <Component {...pageProps} />)
+  </div>
+  );
 }
 
 export default MyApp;

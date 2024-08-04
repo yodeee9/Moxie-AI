@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
 import ChatbotComponent from '../components/Chatbot/Chatbot';
+import AvatarComponent from '../components/AvatarComponent';
+import Header from '../components/Header';
 
 const Home: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -25,18 +26,17 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="container">
-      <Head>
-        <title>AI Apartment Concierge</title>
-        <meta name="description" content="AI Concierge for finding the perfect apartment" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="chat-box">
-        <h1>AI Apartment Concierge</h1>
-        <ChatbotComponent messages={messages} onUserInput={handleUserInput} />
+      <main>
+        <div className="container">
+          <div className="avatar-container">
+            <AvatarComponent />
+            <h1 className="chat-header">AI Apartment Concierge</h1>
+          </div>
+          <div className="chat-box">
+            <ChatbotComponent messages={messages} onUserInput={handleUserInput} />
+          </div>
+        </div>
       </main>
-    </div>
   );
 };
 
