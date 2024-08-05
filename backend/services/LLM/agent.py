@@ -116,7 +116,7 @@ async def llm_agent(user_input, websocket: WebSocket):
     final_response = None
     while not final_response:
         response = client.chat.completions.create(
-            model="gpt-4o-mini-2024-07-18",
+            model="gpt-4o",
             temperature=0.1,
             max_tokens=1000,
             messages=messages,
