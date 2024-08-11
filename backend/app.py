@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 from services.LLM.agent import llm_agent  
 from services.optional_prompt.prompts import SYSTEM_PROMPT_AUGMENTED_JP
 from services.search_data.manual_vector_search import create_vector_store, search_vector_store
-from services.LLM.octo_llama_8b import generate_octo_llama_answer
 
 app = FastAPI()
 vector_store = create_vector_store()

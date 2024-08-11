@@ -119,3 +119,4 @@ flask-cors==4.0.1
 starlette==0.37.2 
 uvicorn==0.30.5 
 websockets==12.0
+youdotcom==2.0.25

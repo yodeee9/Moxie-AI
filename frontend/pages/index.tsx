@@ -1,39 +1,35 @@
 import React, { useState } from 'react';
 import ChatbotComponent from '../components/Chatbot/Chatbot';
 import AvatarComponent from '../components/AvatarComponent';
-import Header from '../components/Header';
+import GoogleMapComponent from '@/components/googlemap';
 
 const Home: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
-
-  const handleUserInput = async (userInput: string) => {
-    // Add the user input to the messages
-    setMessages([...messages, { type: 'user', text: userInput }]);
-
-    // Call the API
-    const response = await fetch('/api/bedrock', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ input: userInput }),
-    });
-
-    const data = await response.json();
-
-    // Add the response to the messages
-    setMessages([...messages, { type: 'user', text: userInput }, { type: 'bot', text: data.response }]);
-  };
+  const [center, setCenter] = useState({ lat: 37.619380950927734, lng: -122.38162994384766 });
+  const [mapMarkers, setMapMarkers] = useState<any[]>([]);
+  const [imgSrc, setImgSrc] = useState<string>(""); // 追加
 
   return (
       <main>
         <div className="container">
-          <div className="avatar-container">
-            <AvatarComponent />
-            <h1 className="chat-header">AI Apartment Concierge</h1>
+          <div className="left-container">
+            <div className='avatar-container'>
+              <AvatarComponent />
+            </div>
           </div>
-          <div className="chat-box">
-            <ChatbotComponent messages={messages} onUserInput={handleUserInput} />
+          <div className="chat-container">
+            <ChatbotComponent
+              messages={messages}
+              setCenter={setCenter}
+              setMapMarkers={setMapMarkers}
+              setImgSrc={setImgSrc} // 追加
+            />
+          </div>
+          <div className="right-container">
+            <GoogleMapComponent center={center} markers={mapMarkers} />
+            <div className="photo-box">
+              <img src={imgSrc} alt="Floor Layout" />
+            </div>
           </div>
         </div>
       </main>

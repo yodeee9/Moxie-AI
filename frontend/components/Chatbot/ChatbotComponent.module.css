@@ -7,35 +7,61 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* 子要素を上下に配置 */
-    height: 700px;
-    /* width: 300px; */
+    justify-content: space-between;
+    height: 100%;
+    width: 600px;
     margin-right: 24px;
-  }
-  
-  .chatContainer {
+}
+
+.chatContainer {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 20px; /* フォームとの間にスペースを確保 */
-  }
-  
-  .chatForm {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatBubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 18px; 
+}
+
+.userBubble {
+    background-color: #0A74DA;
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+}
+
+.operatorBubble {
+    background-color: #e1f5fe;
+    color: black;
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+}
+
+.chatForm {
     display: flex;
     border: 2px solid #0A74DA;
     border-radius: 20px;
     padding: 10px;
-    /* margin-top: 10px; フォームの上部に余白を確保 */ 
-    /* background-color: #f9f9f9; /* 背景色を設定 */
-  }
-  
-  .chatForm input {
-    flex: 1; /* 入力フィールドが利用可能な幅を全て使うようにする */
+}
+
+.chatForm input {
+    flex: 1;
     padding: 5px;
     border: none;
     border-radius: 5px;
-  }
-  
-  .chatForm button {
+    font-size: 14px;
+}
+
+.chatForm button {
     padding: 5px 10px;
     margin-left: 10px;
     border: none;
@@ -43,13 +69,27 @@
     background-color: #0A74DA;
     color: white;
     cursor: pointer;
-  }
-  
-  .chatMessage {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #e1f5fe;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-  
+    font-size: 14px;
+}
+
+.chatForm button:hover {
+    background-color: #0856a0;
+}
+
+/* スクロールバーのスタイル */
+.chatContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chatContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.chatContainer::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.chatContainer::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
