@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 
 openai_client = OpenAI(
-    api_key=OPENAI_API_KEY
+    api_key=OPENAI_API_KEY,
 )
 client = wrap_openai(openai_client)
 
@@ -60,31 +60,47 @@ tool_definitions = [
             "properties": {
                 "isCityView": {
                     "type": "boolean",
-                    "description": "Whether the user wants a city view."
-                    },
+                    "description": "Whether the user wants a city view.",
+                },
                 "schools": {
                     "type": "string",
-                    "description": "The user's preference for schools. elementary, middle, high, or all."
-                    },
+                    "description": "The user's preference for schools. elementary, middle, high, or all.",
+                },
                 "bedsMax": {
                     "type": "integer",
-                    "description": "The maximum number of beds the user wants."
-                    },
+                    "description": "The maximum number of beds the user wants.",
+                },
                 "maxPrice": {
                     "type": "integer",
-                    "description": "The maximum price the user is willing to pay."
-                    },
+                    "description": "The maximum price the user is willing to pay.",
+                },
                 "location": {
                     "type": "string",
-                    "description": "The location the user is interested in."
-                    }
+                    "description": "The location the user is interested in.",
+                },
+                "isWaterfront": {
+                    "type": "boolean",
+                    "description": "Whether the user wants a waterfront view.",
+                },
+                "isMountainView": {
+                    "type": "boolean",
+                    "description": "Whether the user wants a mountain view.",
+                },
+                "isWaterView": {
+                    "type": "boolean",
+                    "description": "Whether the user wants a water view.",
+                },
+                "isParkView": {
+                    "type": "boolean",
+                    "description": "Whether the user wants a park view.",
+                }
             },
             "required": []
         }
     },
     {
         "name": "show_apartments_search_results",
-        "description": "The tool that you call to show the search results to the user. You must call this tool after you have called the search_apartments tool.",
+        "description": "The tool that you call to show the top 3 recommended apartments in the search results to the user.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -105,9 +121,9 @@ tool_definitions = [
                                 "type": "integer",
                                 "description": "The number of beds in the apartment."
                             },
-                            "location": {
+                            "address": {
                                 "type": "string",
-                                "description": "The location of the apartment."
+                                "description": "The address of the apartment."
                             },
                             "imgSrc": {
                                 "type": "string",
@@ -116,10 +132,21 @@ tool_definitions = [
                             "detailUrl": {
                                 "type": "string",
                                 "description": "The URL of the apartment."
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "The reason why this apartment is recommended."
+                            },
+                            "latitude": {
+                                "type": "number",
+                                "description": "The latitude of the apartment."
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "description": "The longitude of the apartment."
                             }
-
                         },
-                        "required": ["name", "price", "beds", "location"]
+                        "required": ["name", "price", "beds", "address", "imgSrc", "detailUrl", "reason", "latitude", "longitude"]
                     }
                 }
             },
@@ -148,7 +175,7 @@ tool_definitions = [
             "properties": {
                 "crime_news_summary": {
                     "type": "string",
-                    "description": "The summary of the crime news which make customer feel safety of the area with nice format including line break codes(\n)."
+                    "description": "The summary of the crime news with nice format including line break codes(\n). And your thouhts about the crime news which make customer feel safety of the area ."
                 }
             },
             "required": ["crime_news"]
@@ -171,6 +198,24 @@ tool_definitions = [
             },
             "required": ["content", "subject"]
         }   
+    },
+    {
+        "name": "send_email_to_owner",
+        "description": "The tool that you call to send an email to the owner of the apartment about the user's interest in the apartment. In the email, include the user's contact information which is dummy data.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "The HTML content of the email sent. Format it very nicely."
+                },
+                "subject": {
+                    "type": "string",
+                    "description": "The subject of the email to be sent to the owner."
+                }
+            },
+            "required": ["content", "subject"]
+        }
     },
     {
         "name": "all_tasks_completed", 
@@ -202,7 +247,13 @@ async def llm_agent(user_input, websocket: WebSocket):
         tool_call = response_message.function_call
         print(f"Tool call: {tool_call}")
 
+        if tool_call is None:
+            final_response = response_message.content
+            break 
+
         if tool_call:
+            if "functions:" in tool_call.name:
+                tool_call.name = tool_call.name.replace("functions:", "")
             function_response = await handle_tool_call(websocket, tool_call)
             messages.append({"role": "system", "name": tool_call.name, "content": json.dumps(function_response)})
         else:
@@ -222,7 +273,8 @@ async def handle_tool_call(websocket,tool_call):
         "show_apartments_search_results": show_apartments_search_results,
         "search_crime_news_nearby": handle_search_crime_news_nearby,
         "summary_of_search_crime_results": handle_summary_of_search_crime_results,
-        "send_email_to_user": send_email
+        "send_email_to_user": send_email_to_user,
+        "send_email_to_owner": send_email_to_owner
     }
 
     print(f"Function name: {function_name}")
@@ -240,7 +292,6 @@ async def handle_statement_for_user(websocket,statement):
     return statement
 
 async def handle_ws_disconnect(websocket):
-    # await websocket.close()
     return
 
 async def handle_check_user_answered_items(websocket, isAnswered):
@@ -250,17 +301,25 @@ async def handle_check_user_answered_items(websocket, isAnswered):
     else:
         return {"allItemsAnswered": False}
 
-async def handle_search_apartments(websocket, isCityView, schools, bedsMax, maxPrice, location):
+async def handle_search_apartments(websocket, isCityView=None, schools=None, bedsMax=None, maxPrice=None, location=None, isWaterfront=None, isMountainView=None, isWaterView=None, isParkView=None):
     await websocket.send_json({'sender': 'system', 'message': 'OK, I am searching for apartments that match your preferences.'})
+    
     params = {
         "isCityView": isCityView,
         "schools": schools,
         "bedsMax": bedsMax,
         "maxPrice": maxPrice,
-        "location": location
+        "location": location,
+        "isWaterfront": isWaterfront,
+        "isMountainView": isMountainView,
+        "isWaterView": isWaterView,
+        "isParkView": isParkView
     }
-    try :
-        response = search_properties(params)
+
+    filtered_params = {key: value for key, value in params.items() if value is not None}
+    
+    try:
+        response = search_properties(filtered_params)
         print(f"Response: {response}")
         if response['statusCode'] == 200:
             response_body = json.loads(response['body'])
@@ -271,21 +330,23 @@ async def handle_search_apartments(websocket, isCityView, schools, bedsMax, maxP
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
         }
-    return
+
 
 async def show_apartments_search_results(websocket, apartments):
     await websocket.send_json({'sender': 'system', 'message': 'Here are the apartments that match your preferences.'})
     for apartment in apartments:
-        detailUrl = apartment['detailUrl'] 
         response_obj = {
             'sender': 'system',
             'response_obj': {
                 'name': apartment['name'],
                 'price': apartment['price'],
                 'beds': apartment['beds'],
-                'location': apartment['location'],
+                'address': apartment['address'],
                 'imgSrc': apartment['imgSrc'],
-                'detailUrl': apartment['detailUrl']
+                'detailUrl': apartment['detailUrl'],
+                'reason': apartment['reason'],
+                'latitude': apartment['latitude'],
+                'longitude': apartment['longitude']
             }
         }
         await websocket.send_json(response_obj)
@@ -310,7 +371,7 @@ async def handle_summary_of_search_crime_results(websocket, crime_news_summary):
     await websocket.send_json({'sender': 'system', 'message': crime_news_summary})
     return {"crime_news_summary": crime_news_summary}
 
-async def send_email(websocket, content: str, subject: str) -> str:
+async def send_email_to_user(websocket, content: str, subject: str) -> str:
     api_key = MAILGUN_API_KEY
     domain = MAILGUN_DOMAIN
     send_to = MAILGUN_SEND_TO
@@ -328,4 +389,24 @@ async def send_email(websocket, content: str, subject: str) -> str:
         data=data
         )
     await websocket.send_json({'sender': 'system', 'message': 'I sent an email to you about the apartment search results.\n Anthing else I can help you with?'})
+    return "Email sent!"
+
+async def send_email_to_owner(websocket, content: str, subject: str) -> str:
+    api_key = MAILGUN_API_KEY
+    domain = MAILGUN_DOMAIN
+    send_to = MAILGUN_SEND_TO
+    
+    if not api_key or not domain:
+        raise ValueError("MAILGUN_API_KEY and MAILGUN_DOMAIN environment variables must be set")
+    data={"from": f"Moxie <mailgun@{domain}>",
+              "to": [send_to],
+              "subject": "Potential Apartments ",
+              "html": content}
+
+    result = requests.post(
+        f"https://api.mailgun.net/v3/{domain}/messages",
+        auth=("api", api_key),
+        data=data
+        )
+    await websocket.send_json({'sender': 'system', 'message': 'I sent an email to the apartment owner about your interest\n Anthing else I can help you with?'})
     return "Email sent!"

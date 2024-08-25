@@ -12,20 +12,41 @@ interface ChatbotComponentProps {
   messages: any[];
   setCenter: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   setMapMarkers: React.Dispatch<React.SetStateAction<any[]>>;
-  setImgSrc: React.Dispatch<React.SetStateAction<string>>; // 追加
+  setImgSrc: React.Dispatch<React.SetStateAction<string>>;
+  apartments: ApartmentInfo[];
+  setApartments: React.Dispatch<React.SetStateAction<ApartmentInfo[]>>;
+  onApartmentClick: (apartmentInfo: ApartmentInfo) => void;
 }
 
-const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter, setMapMarkers, setImgSrc }) => {
+interface ApartmentInfo {
+  name: string;
+  price: string;
+  beds: string;
+  address: string;
+  imgSrc: string;
+  detailUrl: string;
+  coordinates?: { lat: number; lng: number };
+  reason: string;
+}
+
+
+const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ 
+  messages,
+  setCenter,
+  setMapMarkers,
+  setImgSrc,
+  apartments,
+  setApartments,
+  onApartmentClick
+ }) => {
   const [userInput, setUserInput] = useState('');
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
-  // `updateChatHistory`関数を定義
   const updateChatHistory = (newMessage: any) => {
     setChatHistory((prevHistory) => {
       const updatedHistory = [...prevHistory, newMessage];
   
-      // window.setChatHistoryが存在するか確認して呼び出す
       if (window.setChatHistory) {
         window.setChatHistory();
       }
@@ -45,30 +66,29 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter
       console.log('Received message:', data);
 
       if (data.response_obj) {
-        const { name, price, beds, location, imgSrc, detailUrl } = data.response_obj;
+        const { name, price, beds, address, imgSrc, detailUrl, reason, latitude, longitude } = data.response_obj;
 
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`);
-        const geocodeData = await geocodeResponse.json();
+        // const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        // const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`);
+        // const geocodeData = await geocodeResponse.json();
 
-        if (geocodeData.results && geocodeData.results.length > 0) {
-          const { lat, lng } = geocodeData.results[0].geometry.location;
-          console.log(`Location coordinates: Latitude - ${lat}, Longitude - ${lng}`);
+        // let coordinates;
+        // if (geocodeData.results && geocodeData.results.length > 0) {
+        //   console.log('Geocode data:', geocodeData.results[0]);
+        //   coordinates = geocodeData.results[0].geometry.location;
+        // }
 
-          setMapMarkers((prevMarkers) => [
-            ...prevMarkers,
-            { id: uuidv4(), name, position: { lat, lng } }
-          ]);
+        const coordinates = { lat: latitude, lng: longitude };
+        console.log('Coordinates:', coordinates);
 
-          setCenter({ lat, lng });
-        }
+        const newApartment: ApartmentInfo = { name, price, beds, address, imgSrc, detailUrl, coordinates, reason };
+        setApartments(prevApartments => [...prevApartments, newApartment]);
 
-        setImgSrc(imgSrc); // imgSrcをHomeコンポーネントに渡す
-        if (name) {
-          updateChatHistory({ sender: 'Operator', text: `Name: ${name}\nPrice: ${price}\nBeds: ${beds}\nLocation: ${location}` });
-          updateChatHistory({ sender: 'Operator', text: `${detailUrl}` });
-        }
-
+        updateChatHistory({ 
+          sender: 'Operator', 
+          text: `- Name: ${name}\n- Price: ${price}\n- Beds: ${beds}\n- Recommend Reason: ${reason}\n- URL: ${detailUrl}`,
+          apartmentInfo: newApartment
+        });
       } else {
         updateChatHistory({ sender: 'Operator', text: data.message });
       }
@@ -78,7 +98,7 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter
       console.log('WebSocket connection closed');
     };
     return () => newSocket.close();
-  }, [setCenter, setMapMarkers, setImgSrc]);
+  }, [setCenter, setMapMarkers, setImgSrc,setApartments]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -89,8 +109,7 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter
       socket.send(JSON.stringify({ user_input: userInput }));
     }
     
-    updateChatHistory(userMessage); // ユーザー入力時にもチャット履歴を更新
-    
+    updateChatHistory(userMessage);
     setUserInput('');
   };
 
@@ -98,9 +117,17 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter
     setUserInput(event.target.value);
   };
 
+  const handleApartmentClick = (apartmentInfo: ApartmentInfo) => {
+    if (apartmentInfo.coordinates) {
+      setCenter(apartmentInfo.coordinates);
+      setMapMarkers([{ id: uuidv4(), name: apartmentInfo.name, position: apartmentInfo.coordinates }]);
+    }
+    setImgSrc(apartmentInfo.imgSrc);
+  };
+
   useEffect(() => {
     const initialMessage = { sender: 'Operator', text: 'Hi, I am Moxie, AI Apartment Concierge. How can I help you?' };
-    updateChatHistory(initialMessage); // アニメーションをトリガー
+    updateChatHistory(initialMessage);
   }, []);
 
   return (
@@ -108,8 +135,9 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ messages, setCenter
       <div className={styles.chatContainer}>
         {chatHistory.map((chat, index) => (
           <div
-            key={index}
-            className={`${styles.chatBubble} ${chat.sender === 'User' ? styles.userBubble : styles.operatorBubble}`}
+          key={index}
+          className={`${styles.chatBubble} ${chat.sender === 'User' ? styles.userBubble : styles.operatorBubble} ${chat.apartmentInfo ? styles.clickable : ''}`}
+          onClick={() => chat.apartmentInfo && handleApartmentClick(chat.apartmentInfo)}
           >
             {chat.text.split('\n').map((line, i) => (
               <React.Fragment key={i}>
