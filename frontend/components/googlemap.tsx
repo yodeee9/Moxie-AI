@@ -13,8 +13,8 @@ interface GoogleMapComponentProps {
 }
 
 const mapContainerStyle = {
-  width: '350px',
-  height: '350px',
+  width: '400px',
+  height: '420px',
 };
 
 

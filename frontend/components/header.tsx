@@ -5,11 +5,11 @@ class Header extends React.Component {
     return (
       <div className='header'>
         <div className='header-logo'>
-          <img src='moxie_logo.png' alt="Logo" className="logo" />
+          <img src='moxie_icon.png' alt="Logo" className="logo" />
         </div>
-        <div className='header-title'>
+        {/* <div className='header-title'>
           <h1>Moxie</h1>
-        </div>
+        </div> */}
       </div>
     );
   }

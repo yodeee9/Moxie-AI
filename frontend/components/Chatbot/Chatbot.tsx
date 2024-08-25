@@ -29,13 +29,24 @@ interface ApartmentInfo {
   reason: string;
 }
 
+interface NewsInfo {
+  newsTitle: string;
+  source: string;
+  newsDescription: string;
+  url: string;
+}
+
+interface ChatMessage {
+  sender: 'User' | 'Operator';
+  text: string;
+  apartmentInfo?: ApartmentInfo;
+  newsInfo?: NewsInfo;
+}
 
 const ChatbotComponent: React.FC<ChatbotComponentProps> = ({ 
-  messages,
   setCenter,
   setMapMarkers,
   setImgSrc,
-  apartments,
   setApartments,
   onApartmentClick
  }) => {
@@ -43,7 +54,7 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
-  const updateChatHistory = (newMessage: any) => {
+  const updateChatHistory = (newMessage: ChatMessage) => {
     setChatHistory((prevHistory) => {
       const updatedHistory = [...prevHistory, newMessage];
   
@@ -65,18 +76,8 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
       const data = JSON.parse(event.data);
       console.log('Received message:', data);
 
-      if (data.response_obj) {
-        const { name, price, beds, address, imgSrc, detailUrl, reason, latitude, longitude } = data.response_obj;
-
-        // const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        // const geocodeResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`);
-        // const geocodeData = await geocodeResponse.json();
-
-        // let coordinates;
-        // if (geocodeData.results && geocodeData.results.length > 0) {
-        //   console.log('Geocode data:', geocodeData.results[0]);
-        //   coordinates = geocodeData.results[0].geometry.location;
-        // }
+      if (data.apartment_obj) {
+        const { name, price, beds, address, imgSrc, detailUrl, reason, latitude, longitude } = data.apartment_obj;
 
         const coordinates = { lat: latitude, lng: longitude };
         console.log('Coordinates:', coordinates);
@@ -88,6 +89,14 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
           sender: 'Operator', 
           text: `- Name: ${name}\n- Price: ${price}\n- Beds: ${beds}\n- Recommend Reason: ${reason}\n- URL: ${detailUrl}`,
           apartmentInfo: newApartment
+        });
+      } else if (data.news_obj) {
+        const { newsTitle, source, newsDescription, url } = data.news_obj;
+        const newsInfo: NewsInfo = { newsTitle, source, newsDescription, url };
+        updateChatHistory({ 
+          sender: 'Operator', 
+          text: 'News Information',
+          newsInfo: newsInfo
         });
       } else {
         updateChatHistory({ sender: 'Operator', text: data.message });
@@ -130,23 +139,72 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
     updateChatHistory(initialMessage);
   }, []);
 
+
+  const renderMessage = (message: ChatMessage, index: number) => {
+    if (message.apartmentInfo) {
+      return (
+        <div
+          key={index}
+          className={`${styles.chatBubble} ${styles.operatorBubble} ${styles.apartmentCard}`}
+          onClick={() => onApartmentClick(message.apartmentInfo!)}
+        >
+          <table className={styles.apartmentTable}>
+            <tbody>
+              <tr><th>Name:</th><td>{message.apartmentInfo.name}</td></tr>
+              <tr><th>Price:</th><td>${message.apartmentInfo.price}</td></tr>
+              <tr><th>Beds:</th><td>{message.apartmentInfo.beds}</td></tr>
+              <tr><th>Reason:</th><td>{message.apartmentInfo.reason}</td></tr>
+              <tr>
+                <th>URL:</th>
+                <td>
+                  <a href={message.apartmentInfo.detailUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                    View on Zillow
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    } else if (message.newsInfo) {
+      return (
+        <div
+          key={index}
+          className={`${styles.chatBubble} ${styles.operatorBubble} ${styles.newsCard}`}
+        >
+          <table className={styles.newsTable}>
+            <tbody>
+              <tr><th>Title:</th><td>{message.newsInfo.newsTitle}</td></tr>
+              <tr><th>Source:</th><td>{message.newsInfo.source}</td></tr>
+              <tr><th>Description:</th><td>{message.newsInfo.newsDescription}</td></tr>
+              <tr>
+                <th>URL:</th>
+                <td>
+                  <a href={message.newsInfo.url} target="_blank" rel="noopener noreferrer">
+                    Read More
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    } else {
+      return (
+        <div
+          key={index}
+          className={`${styles.chatBubble} ${message.sender === 'User' ? styles.userBubble : styles.operatorBubble}`}
+        >
+          {message.text}
+        </div>
+      );
+    }
+  };
+
   return (
     <div className={styles.chatBox}>
       <div className={styles.chatContainer}>
-        {chatHistory.map((chat, index) => (
-          <div
-          key={index}
-          className={`${styles.chatBubble} ${chat.sender === 'User' ? styles.userBubble : styles.operatorBubble} ${chat.apartmentInfo ? styles.clickable : ''}`}
-          onClick={() => chat.apartmentInfo && handleApartmentClick(chat.apartmentInfo)}
-          >
-            {chat.text.split('\n').map((line, i) => (
-              <React.Fragment key={i}>
-                {line}
-                <br />
-              </React.Fragment>
-            ))}
-          </div>
-        ))}
+        {chatHistory.map((message, index) => renderMessage(message, index))}
       </div>
       <form onSubmit={handleSubmit} className={styles.chatForm}>
         <input
@@ -156,7 +214,9 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
           placeholder="Type your message..."
           className={styles.chatInput}
         />
-        <button type="submit" className={styles.sendButton}>Send</button>
+        <button type="submit" className={styles.sendButton}>
+          <img src="send_button2.svg" alt="Button Icon"></img>
+        </button>
       </form>
     </div>
   );

@@ -6,7 +6,6 @@ from services.optional_prompt.prompts import SYSTEM_PROMPT_AUGMENTED_JP
 from services.search_data.manual_vector_search import create_vector_store, search_vector_store
 
 app = FastAPI()
-vector_store = create_vector_store()
 
 app.add_middleware(
     CORSMiddleware,

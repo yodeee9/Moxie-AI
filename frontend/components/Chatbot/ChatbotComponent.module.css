@@ -9,7 +9,7 @@
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    width: 600px;
+    width: 630px;
     margin-right: 24px;
 }
 
@@ -46,6 +46,48 @@
     border-bottom-left-radius: 0;
 }
 
+.apartmentCard {
+    background-color: #f0f8ff;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    max-width: 90%;
+    align-self: flex-start;
+}
+
+.apartmentCard:hover {
+    background-color: #e6f3ff;
+}
+
+.apartmentTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.apartmentTable th, .apartmentTable td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.apartmentTable th {
+    width: 30%;
+    font-weight: bold;
+    color: #0A74DA;
+}
+
+.apartmentTable a {
+    color: #0A74DA;
+    text-decoration: none;
+}
+
+.apartmentTable a:hover {
+    text-decoration: underline;
+}
+
 .chatForm {
     display: flex;
     border: 2px solid #0A74DA;
@@ -66,17 +108,16 @@
     margin-left: 10px;
     border: none;
     border-radius: 5px;
-    background-color: #0A74DA;
+    background-color: #FFFFFF;
     color: white;
     cursor: pointer;
     font-size: 14px;
 }
 
 .chatForm button:hover {
-    background-color: #0856a0;
+    background-color: #f0f8ff;
 }
 
-/* スクロールバーのスタイル */
 .chatContainer::-webkit-scrollbar {
     width: 6px;
 }
@@ -92,4 +133,41 @@
 
 .chatContainer::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+
+.newsCard {
+    background-color: #f0fff0; /* 薄い緑色の背景 */
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    max-width: 90%;
+    align-self: flex-start;
+}
+
+.newsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.newsTable th, .newsTable td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.newsTable th {
+    width: 30%;
+    font-weight: bold;
+    color: #2e8b57; /* 濃い緑色 */
+}
+
+.newsTable a {
+    color: #2e8b57;
+    text-decoration: none;
+}
+
+.newsTable a:hover {
+    text-decoration: underline;
 }

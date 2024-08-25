@@ -1,6 +1,5 @@
 import json
 from time import sleep
-
 import requests
 from openai import OpenAI
 import logging
@@ -100,7 +99,7 @@ tool_definitions = [
     },
     {
         "name": "show_apartments_search_results",
-        "description": "The tool that you call to show the top 3 recommended apartments in the search results to the user.",
+        "description": "The tool that you call to show the top 3 recommended apartments in the search results to the user. Make sure call this tool at once after you have called the search_apartments tool. You can't repeat this tool.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -173,12 +172,33 @@ tool_definitions = [
         "parameters": {
             "type": "object",
             "properties": {
-                "crime_news_summary": {
-                    "type": "string",
-                    "description": "The summary of the crime news with nice format including line break codes(\n). And your thouhts about the crime news which make customer feel safety of the area ."
+                "news": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "newsTitle": {
+                                "type": "string",
+                                "description": "The title of the news."
+                            },
+                            "source": {
+                                "type": "string",
+                                "description": "The source of the news."
+                            },
+                            "newsDescription": {
+                                "type": "string",
+                                "description": "The description of the news."
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "The URL of the news."
+                            },
+                        },
+                        "required": ["newsTitle", "source", "newsDescription", "url"]
+                    },
                 }
             },
-            "required": ["crime_news"]
+            "required": ["news"]
         }
     },
     {
@@ -337,7 +357,7 @@ async def show_apartments_search_results(websocket, apartments):
     for apartment in apartments:
         response_obj = {
             'sender': 'system',
-            'response_obj': {
+            'apartment_obj': {
                 'name': apartment['name'],
                 'price': apartment['price'],
                 'beds': apartment['beds'],
@@ -353,12 +373,12 @@ async def show_apartments_search_results(websocket, apartments):
     return
         
 async def handle_search_crime_news_nearby(websocket, city):
-    await websocket.send_json({'sender': 'system', 'message': 'I am searching for crime news in your area.'})
+    await websocket.send_json({'sender': 'system', 'message': 'I am searching for news related to the safety of your area.'})
     url = "https://api.ydc-index.io/news"
 
     headers = {"X-API-Key": YOUCOM_API_KEY}
     query = f"crime {city}"
-    params = {"query": f"crime {city}",
+    params = {"query": f"homeless {city}",
               "count": 3,
               "recency": "week",}
     response = requests.get(f'{url}?={query}', headers=headers, params=params)
@@ -366,10 +386,51 @@ async def handle_search_crime_news_nearby(websocket, city):
     return response.json()
 
 
-async def handle_summary_of_search_crime_results(websocket, crime_news_summary):
-    await websocket.send_json({'sender': 'system', 'message': 'Here are the crime news in your area.'})
-    await websocket.send_json({'sender': 'system', 'message': crime_news_summary})
-    return {"crime_news_summary": crime_news_summary}
+async def handle_summary_of_search_crime_results(websocket, news):
+    await websocket.send_json({'sender': 'system', 'message': 'Here are the news related to safety in your area.'})
+    news_string = ''
+    for item in news:
+        response_obj = {
+            'sender': 'system',
+            'news_obj': {
+                'newsTitle': item['newsTitle'],
+                'source': item['source'],
+                'newsDescription': item['newsDescription'],
+                'url': item['url']
+            }
+        }
+        await websocket.send_json(response_obj)
+        news_string += f"Title: {item['newsTitle']}, Source: {item['source']}, Description: {item['newsDescription']}, URL: {item['url']}\n"
+
+    # Create a summary of the crime news
+    messages = [{"role": "system", "content": f"""
+        Please create a summary of the crime news.
+        The summary of the crime news with nice format including line break codes(\n). And your thouhts about the crime news which make customer feel safety of the area.
+
+        # notes:
+        Total number of words: less than 50 words
+        
+        # news: 
+        news: {news_string}
+        
+        # Example:
+        San Francisco is taking proactive steps to address the city's challenges, including initiatives led by Mayor London Breed to provide support and solutions for the homeless community. Efforts like relocating individuals to appropriate areas and ensuring legal measures are in place demonstrate the city's commitment to maintaining a safe and secure environment. Rest assured, these actions contribute to a safer community, making it a great place to call home.
+        """}]
+
+    print(f"messages: {messages}")
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        temperature=0.1,
+        max_tokens=1000,
+        messages=messages,
+    )
+    
+    print(f"Response: {response}")
+    
+    newsSummary = response.choices[0].message.content
+    await websocket.send_json({'sender': 'system', 'message': newsSummary})
+
+    return {"newsSummary": newsSummary}
 
 async def send_email_to_user(websocket, content: str, subject: str) -> str:
     api_key = MAILGUN_API_KEY
