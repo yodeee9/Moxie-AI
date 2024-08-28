@@ -7,9 +7,6 @@ class Header extends React.Component {
         <div className='header-logo'>
           <img src='moxie_icon.png' alt="Logo" className="logo" />
         </div>
-        {/* <div className='header-title'>
-          <h1>Moxie</h1>
-        </div> */}
       </div>
     );
   }

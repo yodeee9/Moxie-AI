@@ -6,8 +6,6 @@ services:
       - "8080:8080"
     volumes:
       - ./backend:/app
-    environment:
-      - FLASK_ENV=development
 
   frontend:
     build: ./frontend

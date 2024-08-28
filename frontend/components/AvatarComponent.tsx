@@ -6,7 +6,7 @@ const AvatarComponent: React.FC = () => {
     src: '/office4.riv', 
     stateMachines: 'State Machine 1', 
     layout: new Layout({
-      fit: Fit.Height,
+      fit: Fit.FitHeight,
       alignment: Alignment.Center,
     }),
     autoplay: true,

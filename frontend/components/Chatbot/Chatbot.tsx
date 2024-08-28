@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import styles from './ChatbotComponent.module.css';
-
+import { ApartmentInfo } from '@/types';
 declare global {
   interface Window {
     setChatHistory: () => void;
@@ -16,17 +16,6 @@ interface ChatbotComponentProps {
   apartments: ApartmentInfo[];
   setApartments: React.Dispatch<React.SetStateAction<ApartmentInfo[]>>;
   onApartmentClick: (apartmentInfo: ApartmentInfo) => void;
-}
-
-interface ApartmentInfo {
-  name: string;
-  price: string;
-  beds: string;
-  address: string;
-  imgSrc: string;
-  detailUrl: string;
-  coordinates?: { lat: number; lng: number };
-  reason: string;
 }
 
 interface NewsInfo {
@@ -112,7 +101,7 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!userInput.trim()) return;
-    const userMessage = { sender: 'User', text: userInput };
+    const userMessage: ChatMessage = { sender: 'User', text: userInput };
     
     if (socket) {
       socket.send(JSON.stringify({ user_input: userInput }));
@@ -135,7 +124,7 @@ const ChatbotComponent: React.FC<ChatbotComponentProps> = ({
   };
 
   useEffect(() => {
-    const initialMessage = { sender: 'Operator', text: 'Hi, I am Moxie, AI Apartment Concierge. How can I help you?' };
+    const initialMessage: ChatMessage = { sender: 'Operator', text: 'Hi, I am Moxie, AI Apartment Concierge. How can I help you?' };
     updateChatHistory(initialMessage);
   }, []);
 
